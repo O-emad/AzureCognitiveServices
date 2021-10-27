@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:VideoAnalyzer"
         mc:Ignorable="d"
         Title="Video Analyzer" Width="1920" Height="1080"  WindowState="Maximized" Background="Black" 
-        WindowStyle="None" BorderThickness="0" ResizeMode="NoResize">
+        WindowStyle="None" BorderThickness="0" ResizeMode="NoResize" Loaded="Window_Loaded">
     <Viewbox>
         <Grid Width="1920" Height="1080" x:Name="mainGrid">
             <Grid.RowDefinitions>
@@ -30,7 +30,7 @@
                 </Grid.ColumnDefinitions>
                 <Image x:Name="LeftImage" Grid.Column="0" Margin="5" />
                 <Image x:Name="RightImage" Grid.Column="1" Margin="5" Panel.ZIndex="1" />
-                <StackPanel Visibility="Visible" Grid.Column="1" Panel.ZIndex="2" Name="AddPersonPanel" Background="LightGray" VerticalAlignment="Top" Margin="5">
+                <StackPanel Visibility="Collapsed" Grid.Column="1" Panel.ZIndex="2" Name="AddPersonPanel" Background="LightGray" VerticalAlignment="Top" Margin="5">
                     <TextBlock Margin="5" Grid.Row="0" FontWeight="Bold" Text="AddPerson"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -59,7 +59,7 @@
                 </StackPanel>
 
             </Grid>
-            <TextBlock Name="MessageArea" Margin="5" Grid.Row="2" VerticalAlignment="Center" />
+            <TextBlock Name="MessageArea" Margin="5" Grid.Row="2" VerticalAlignment="Center" Background="White" />
         </Grid>
     </Viewbox>
 </Window>

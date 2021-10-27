@@ -11,16 +11,16 @@ using FaceAPI = Microsoft.Azure.CognitiveServices.Vision.Face;
 using VisionAPI = Microsoft.Azure.CognitiveServices.Vision.ComputerVision;
 namespace VideoAnalyzer
 {
-    public class Visualization
+    public static class Visualization
     {
-        private static SolidColorBrush s_lineBrush = new SolidColorBrush(new System.Windows.Media.Color { R = 255, G = 185, B = 0, A = 255 });
-        private static Typeface s_typeface = new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal);
+        private static readonly SolidColorBrush s_lineBrush = new(new System.Windows.Media.Color { R = 255, G = 185, B = 0, A = 255 });
+        private static readonly Typeface s_typeface = new(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal);
 
         private static BitmapSource DrawOverlay(BitmapSource baseImage, Action<DrawingContext, double> drawAction)
         {
-            double annotationScale = baseImage.PixelHeight / 320;
+            double annotationScale = (double)baseImage.PixelHeight / 320.0;
 
-            DrawingVisual visual = new DrawingVisual();
+            DrawingVisual visual = new();
             DrawingContext drawingContext = visual.RenderOpen();
 
             drawingContext.DrawImage(baseImage, new Rect(0, 0, baseImage.Width, baseImage.Height));
@@ -29,7 +29,7 @@ namespace VideoAnalyzer
 
             drawingContext.Close();
 
-            RenderTargetBitmap outputBitmap = new RenderTargetBitmap(
+            RenderTargetBitmap outputBitmap = new(
                 baseImage.PixelWidth, baseImage.PixelHeight,
                 baseImage.DpiX, baseImage.DpiY, PixelFormats.Pbgra32);
 
@@ -51,9 +51,12 @@ namespace VideoAnalyzer
                 foreach (var tag in tags)
                 {
                     // Create formatted text--in a particular font at a particular size
-                    FormattedText ft = new FormattedText(tag.Name,
+
+
+                    FormattedText ft = new(tag.Name,
                         CultureInfo.CurrentCulture, FlowDirection.LeftToRight, s_typeface,
-                        42 * annotationScale, Brushes.Black);
+                        32 * annotationScale, Brushes.Black,0.5);
+
                     // Instead of calling DrawText (which can only draw the text in a solid colour), we
                     // convert to geometry and use DrawGeometry, which allows us to add an outline. 
                     var geom = ft.BuildGeometry(new System.Windows.Point(10 * annotationScale, y));
@@ -80,7 +83,7 @@ namespace VideoAnalyzer
                     var face = faces[i];
                     if (face.FaceRectangle == null) { continue; }
 
-                    Rect faceRect = new Rect(
+                    Rect faceRect = new(
                         face.FaceRectangle.Left, face.FaceRectangle.Top,
                         face.FaceRectangle.Width, face.FaceRectangle.Height);
 
@@ -112,9 +115,9 @@ namespace VideoAnalyzer
 
                     if (summary.Length > 0)
                     {
-                        FormattedText ft = new FormattedText(summary.ToString(),
+                        FormattedText ft = new(summary.ToString(),
                             CultureInfo.CurrentCulture, FlowDirection.LeftToRight, s_typeface,
-                            16 * annotationScale, Brushes.Black);
+                            16 * annotationScale, Brushes.Black,3);
 
                         var pad = 3 * annotationScale;
 

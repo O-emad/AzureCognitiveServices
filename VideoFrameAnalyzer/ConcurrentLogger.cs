@@ -10,8 +10,8 @@ namespace VideoFrameAnalyzer
 {
     public static class ConcurrentLogger
     {
-        private readonly static SemaphoreSlim s_printMutex = new SemaphoreSlim(1);
-        private readonly static BlockingCollection<string> s_messageQueue = new BlockingCollection<string>();
+        private readonly static SemaphoreSlim s_printMutex = new(1);
+        private readonly static BlockingCollection<string> s_messageQueue = new();
 
         public static void WriteLine(string message)
         {

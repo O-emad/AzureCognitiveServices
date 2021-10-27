@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace VideoAnalyzer
 {
-    internal class Aggregation
+    static internal class Aggregation
     {
         public static KeyValuePair<string, double> GetDominantEmotion(Emotion scores)
         {
@@ -35,7 +35,7 @@ namespace VideoAnalyzer
 
         public static string SummarizeFaceAttributes(FaceAttributes attr)
         {
-            List<string> attrs = new List<string>();
+            List<string> attrs = new();
             if (attr.Gender.HasValue) attrs.Add(attr.Gender.Value.ToString());
             if (attr.Age > 0) attrs.Add(attr.Age.ToString());
             if (attr.HeadPose != null)

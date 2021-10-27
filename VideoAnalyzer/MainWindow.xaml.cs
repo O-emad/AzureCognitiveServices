@@ -39,8 +39,8 @@ namespace VideoAnalyzer
         private const string clientGroupId = "5f432198";
         private const string clientGroupName = "Clients";
         private readonly TimeSpan analyzeInterval = TimeSpan.FromSeconds(1);
-        private FrameGrabber<LiveCameraResult> _grabber;
-        private readonly CascadeClassifier _localFaceDetector = new CascadeClassifier();
+        private readonly FrameGrabber<LiveCameraResult> _grabber;
+        private readonly CascadeClassifier _localFaceDetector = new();
         private AppMode _mode;
         private bool _fuseClientRemoteResults;
         private LiveCameraResult _latestResultsToDisplay = null;
@@ -51,7 +51,7 @@ namespace VideoAnalyzer
         public MainWindow()
         {
             InitializeComponent();
-            //CustomComponentsInitialize();
+
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
             // Create grabber. 
@@ -60,7 +60,7 @@ namespace VideoAnalyzer
             // Set up a listener for when the client receives a new frame.
             _grabber.NewFrameProvided += (s, e) =>
             {
-                if (_mode == AppMode.EmotionsWithClientFaceDetect)
+                if (_mode != AppMode.Emotions)
                 {
                     // Local face detection. 
                     var rects = _localFaceDetector.DetectMultiScale(e.Frame.Image);
@@ -70,69 +70,61 @@ namespace VideoAnalyzer
 
                 // The callback may occur on a different thread, so we must use the
                 // MainWindow.Dispatcher when manipulating the UI. 
-                Dispatcher.BeginInvoke((Action)(() =>
-                {
+                _ = Dispatcher.BeginInvoke((Action)(() =>
+                  {
                     // Display the image in the left pane.
                     LeftImage.Source = e.Frame.Image.ToBitmapSource();
 
                     // If we're fusing client-side face detection with remote analysis, show the
                     // new frame now with the most recent analysis available. 
                     if (_fuseClientRemoteResults)
-                    {
-                        RightImage.Source = VisualizeResult(e.Frame);
-                    }
-                }));
+                      {
+                          RightImage.Source = VisualizeResult(e.Frame);
+                      }
+                  }));
 
-                // See if auto-stop should be triggered. 
-                //if (Properties.Settings.Default.AutoStopEnabled && (DateTime.Now - _startTime) > Properties.Settings.Default.AutoStopTime)
-                //{
-                //    _grabber.StopProcessingAsync().GetAwaiter().GetResult();
-                //}
             };
 
             // Set up a listener for when the client receives a new result from an API call. 
             _grabber.NewResultAvailable += (s, e) =>
             {
-                this.Dispatcher.BeginInvoke((Action)(() =>
-                {
-                    if (e.TimedOut)
-                    {
-                        MessageArea.Text = "API call timed out.";
-                    }
-                    else if (e.Exception != null)
-                    {
-                        string apiName = "";
-                        string message = e.Exception.Message;
-                        var faceEx = e.Exception as FaceAPI.Models.APIErrorException;
-                        var visionEx = e.Exception as VisionAPI.Models.ComputerVisionErrorResponseException;
-                        if (faceEx != null)
-                        {
-                            apiName = "Face";
-                            message = faceEx.Message;
-                        }
-                        else if (visionEx != null)
-                        {
-                            apiName = "Computer Vision";
-                            message = visionEx.Message;
-                        }
-                        MessageArea.Text = string.Format("{0} API call failed on frame {1}. Exception: {2}", apiName, e.Frame.Metadata.Index, message);
-                    }
-                    else
-                    {
-                        _latestResultsToDisplay = e.Analysis;
+                _ = Dispatcher.BeginInvoke((Action)(() =>
+                  {
+                      if (e.TimedOut)
+                      {
+                          MessageArea.Text = "API call timed out.";
+                      }
+                      else if (e.Exception != null)
+                      {
+                          string apiName = "";
+                          string message = e.Exception.Message;
+                          if (e.Exception is FaceAPI.Models.APIErrorException faceEx)
+                          {
+                              apiName = "Face";
+                              message = faceEx.Message;
+                          }
+                          else if (e.Exception is VisionAPI.Models.ComputerVisionErrorResponseException visionEx)
+                          {
+                              apiName = "Computer Vision";
+                              message = visionEx.Message;
+                          }
+                          MessageArea.Text = string.Format("{0} API call failed on frame {1}. Exception: {2}", apiName, e.Frame.Metadata.Index, message);
+                      }
+                      else
+                      {
+                          _latestResultsToDisplay = e.Analysis;
 
                         // Display the image and visualization in the right pane. 
                         if (!_fuseClientRemoteResults)
-                        {
-                            RightImage.Source = VisualizeResult(e.Frame);
-                        }
-                    }
-                }));
+                          {
+                              RightImage.Source = VisualizeResult(e.Frame);
+                          }
+                      }
+                  }));
             };
 
             // Create local face detector. 
-            _localFaceDetector.Load(@"Data\haarcascade_frontalface_alt2.xml");
-            var task = InitializeGroup(clientGroupId, clientGroupName);
+            _ = _localFaceDetector.Load(@"Data\haarcascade_frontalface_alt2.xml");
         }
 
         public enum AppMode
@@ -142,91 +134,6 @@ namespace VideoAnalyzer
             EmotionsWithClientFaceDetect,
             Tags,
             Recognition
-        }
-
-        private async void CustomComponentsInitialize()
-        {
-            await InitializeGroup(clientGroupId, clientGroupName);
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-
-            // Create grabber. 
-            _grabber = new FrameGrabber<LiveCameraResult>();
-
-            // Set up a listener for when the client receives a new frame.
-            _grabber.NewFrameProvided += (s, e) =>
-            {
-                if (_mode == AppMode.EmotionsWithClientFaceDetect)
-                {
-                    // Local face detection. 
-                    var rects = _localFaceDetector.DetectMultiScale(e.Frame.Image);
-                    // Attach faces to frame. 
-                    e.Frame.UserData = rects;
-                }
-
-                // The callback may occur on a different thread, so we must use the
-                // MainWindow.Dispatcher when manipulating the UI. 
-                Dispatcher.BeginInvoke((Action)(() =>
-                {
-                    // Display the image in the left pane.
-                    LeftImage.Source = e.Frame.Image.ToBitmapSource();
-
-                    // If we're fusing client-side face detection with remote analysis, show the
-                    // new frame now with the most recent analysis available. 
-                    if(_fuseClientRemoteResults)
-                    {
-                        RightImage.Source = VisualizeResult(e.Frame);
-                    }
-                }));
-
-                // See if auto-stop should be triggered. 
-                //if (Properties.Settings.Default.AutoStopEnabled && (DateTime.Now - _startTime) > Properties.Settings.Default.AutoStopTime)
-                //{
-                //    _grabber.StopProcessingAsync().GetAwaiter().GetResult();
-                //}
-            };
-
-            // Set up a listener for when the client receives a new result from an API call. 
-            _grabber.NewResultAvailable += (s, e) =>
-            {
-                this.Dispatcher.BeginInvoke((Action)(() =>
-                {
-                    if (e.TimedOut)
-                    {
-                        MessageArea.Text = "API call timed out.";
-                    }
-                    else if (e.Exception != null)
-                    {
-                        string apiName = "";
-                        string message = e.Exception.Message;
-                        var faceEx = e.Exception as FaceAPI.Models.APIErrorException;
-                        var visionEx = e.Exception as VisionAPI.Models.ComputerVisionErrorResponseException;
-                        if (faceEx != null)
-                        {
-                            apiName = "Face";
-                            message = faceEx.Message;
-                        }
-                        else if (visionEx != null)
-                        {
-                            apiName = "Computer Vision";
-                            message = visionEx.Message;
-                        }
-                        MessageArea.Text = string.Format("{0} API call failed on frame {1}. Exception: {2}", apiName, e.Frame.Metadata.Index, message);
-                    }
-                    else
-                    {
-                        _latestResultsToDisplay = e.Analysis;
-
-                        // Display the image and visualization in the right pane. 
-                        if (!_fuseClientRemoteResults)
-                        {
-                            RightImage.Source = VisualizeResult(e.Frame);
-                        }
-                    }
-                }));
-            };
-
-            // Create local face detector. 
-            _localFaceDetector.Load("Data/haarcascade_frontalface_alt2.xml");
         }
 
         private BitmapSource VisualizeResult(VideoFrame frame)
@@ -255,7 +162,7 @@ namespace VideoAnalyzer
             return visImage;
         }
 
-        private void MatchAndReplaceFaceRectangles(FaceAPI.Models.DetectedFace[] faces, OpenCvSharp.Rect[] clientRects)
+        private static void MatchAndReplaceFaceRectangles(DetectedFace[] faces, OpenCvSharp.Rect[] clientRects)
         {
             // Use a simple heuristic for matching the client-side faces to the faces in the
             // results. Just sort both lists left-to-right, and assume a 1:1 correspondence. 
@@ -306,38 +213,19 @@ namespace VideoAnalyzer
                 MessageArea.Text = "No cameras found; cannot start processing";
                 return;
             }
-
-            // Clean leading/trailing spaces in API keys. 
-           // Properties.Settings.Default.FaceAPIKey = Properties.Settings.Default.FaceAPIKey.Trim();
-           // Properties.Settings.Default.VisionAPIKey = Properties.Settings.Default.VisionAPIKey.Trim();
-
-            // Create API clients.
-            var _faceClient = new FaceAPI.FaceClient(new FaceAPI.ApiKeyServiceClientCredentials(cog_Key))
-            {
-                Endpoint = cog_endpoint
-            };
-            var _visionClient = new VisionAPI.ComputerVisionClient(new VisionAPI.ApiKeyServiceClientCredentials(cog_Key))
-            {
-                Endpoint = cog_endpoint
-            };
-
             // How often to analyze. 
             _grabber.TriggerAnalysisOnInterval(analyzeInterval);
 
             // Reset message. 
             MessageArea.Text = "";
-
-            // Record start time, for auto-stop
-            //_startTime = DateTime.Now;
-
             await _grabber.StartProcessingCameraAsync(CameraList.SelectedIndex);
         }
 
 
 
-        private void stopButton_Click(object sender, RoutedEventArgs e)
+        private async void stopButton_Click(object sender, RoutedEventArgs e)
         {
-
+            await _grabber.StopProcessingAsync();
         }
 
         private void ModeList_Loaded(object sender, RoutedEventArgs e)
@@ -352,51 +240,57 @@ namespace VideoAnalyzer
         private async Task<LiveCameraResult> RecognitionAnalysisFunction(VideoFrame frame)
         {
             // Encode image. 
-            var jpg = frame.Image.ToMemoryStream(".jpg", s_jpegParams);
+            MemoryStream jpg = frame.Image.ToMemoryStream(".jpg", s_jpegParams);
             // Submit image to API. 
-            //var _visionClient = new VisionAPI.ComputerVisionClient(new VisionAPI.ApiKeyServiceClientCredentials(cog_Key))
-            //{
-            //    Endpoint = cog_endpoint
-            //};
-            //var domainModelResults = await _visionClient.AnalyzeImageByDomainInStreamAsync("celebrities", jpg);
-
-            FaceAPI.ApiKeyServiceClientCredentials credentials = new(cog_Key);
-            FaceClient _faceClient = new(credentials)
+            var localFaces = (OpenCvSharp.Rect[])frame.UserData;
+            if (localFaces == null || localFaces.Length > 0)
             {
-                Endpoint = cog_endpoint
-            };
-            var detectedFaces = await _faceClient.Face.DetectWithStreamAsync(jpg);
-            var detectedFacesId = detectedFaces.Select(r => r.FaceId.GetValueOrDefault()).ToList();
-            var recognizedFaces = await _faceClient.Face.IdentifyAsync(detectedFacesId, clientGroupId);
-            var recognizedNames = new List<string>();
-            foreach (var face in recognizedFaces)
-            {
-                if (face.Candidates.Count > 0)
+                FaceAPI.ApiKeyServiceClientCredentials credentials = new(cog_Key);
+                FaceClient _faceClient = new(credentials)
                 {
-                    var person = await _faceClient.PersonGroupPerson.GetAsync(clientGroupId, face.Candidates[0].PersonId);
-                    recognizedNames.Add(person.Name);
-                }
-                else
+                    Endpoint = cog_endpoint
+                };
+                IList<DetectedFace> detectedFaces = await _faceClient.Face.DetectWithStreamAsync(jpg);
+                List<Guid> detectedFacesId = detectedFaces.Select(r => r.FaceId.GetValueOrDefault()).ToList();
+                IList<IdentifyResult> recognizedFaces = await _faceClient.Face.IdentifyAsync(detectedFacesId, clientGroupId);
+                List<string> recognizedNames = new();
+                foreach (IdentifyResult face in recognizedFaces)
                 {
-                    recognizedNames.Add("");
+                    if (face.Candidates.Count > 0)
+                    {
+                        Person person = await _faceClient.PersonGroupPerson.GetAsync(clientGroupId, face.Candidates[0].PersonId);
+                        recognizedNames.Add(person.Name);
+                        Dispatcher.Invoke(() =>
+                        {
+                            MessageArea.Text = person.Name + " with confidence: " + face.Candidates[0].Confidence.ToString();
+                        });
+                        
+                    }
+                    else
+                    {
+                        recognizedNames.Add("");
+                    }
                 }
+                return new LiveCameraResult
+                {
+                    // Extract face rectangles from results. 
+                    Faces = detectedFaces.Select(c => CreateFace(c.FaceRectangle)).ToArray(),
+                    // Extract celebrity names from results. 
+                    CelebrityNames = recognizedNames.ToArray()
+                };
             }
-            // Count the API call. 
-            // Properties.Settings.Default.VisionAPICallCount++;
-            // Output. 
-            //var jobject = domainModelResults as JObject;
-            //var celebs = jobject.ToObject<FaceAPI.Models.DetectedFace>().;
-
-            return new LiveCameraResult
+            else
             {
-                // Extract face rectangles from results. 
-                Faces = detectedFaces.Select(c => CreateFace(c.FaceRectangle)).ToArray(),
-                // Extract celebrity names from results. 
-                CelebrityNames = recognizedNames.ToArray()
-            };
+                return new LiveCameraResult
+                {
+                    // Local face detection found no faces; don't call Cognitive Services.
+                    Faces = Array.Empty<DetectedFace>(),
+                    CelebrityNames = Array.Empty<string>()
+                };
+            }
         }
 
-        private FaceAPI.Models.DetectedFace CreateFace(FaceAPI.Models.FaceRectangle rect)
+        private static DetectedFace CreateFace(FaceRectangle rect)
         {
             return new FaceAPI.Models.DetectedFace
             {
@@ -410,6 +304,82 @@ namespace VideoAnalyzer
             };
         }
 
+        /// <summary> Function which submits a frame to the Face API. </summary>
+        /// <param name="frame"> The video frame to submit. </param>
+        /// <returns> A <see cref="Task{LiveCameraResult}"/> representing the asynchronous API call,
+        ///     and containing the faces returned by the API. </returns>
+        private async Task<LiveCameraResult> FacesAnalysisFunction(VideoFrame frame)
+        {
+            // Encode image. 
+            var jpg = frame.Image.ToMemoryStream(".jpg", s_jpegParams);
+            // Submit image to API. 
+            var attrs = new List<FaceAPI.Models.FaceAttributeType> {
+                FaceAPI.Models.FaceAttributeType.Age,
+                FaceAPI.Models.FaceAttributeType.Gender,
+                FaceAPI.Models.FaceAttributeType.HeadPose
+            };
+            FaceAPI.ApiKeyServiceClientCredentials credentials = new(cog_Key);
+            FaceClient _faceClient = new(credentials)
+            {
+                Endpoint = cog_endpoint
+            };
+            var faces = await _faceClient.Face.DetectWithStreamAsync(jpg, returnFaceAttributes: attrs);
+            // Output. 
+            return new LiveCameraResult { Faces = faces.ToArray() };
+        }
+
+        private async Task<LiveCameraResult> EmotionAnalysisFunction(VideoFrame frame)
+        {
+            // Encode image. 
+            var jpg = frame.Image.ToMemoryStream(".jpg", s_jpegParams);
+            // Submit image to API. 
+            FaceAPI.Models.DetectedFace[] faces = null;
+
+            // See if we have local face detections for this image.
+            var localFaces = (OpenCvSharp.Rect[])frame.UserData;
+            if (localFaces == null || localFaces.Length > 0)
+            {
+                FaceAPI.ApiKeyServiceClientCredentials credentials = new(cog_Key);
+                FaceClient _faceClient = new(credentials)
+                {
+                    Endpoint = cog_endpoint
+                };
+                // If localFaces is null, we're not performing local face detection.
+                // Use Cognigitve Services to do the face detection.
+                faces = (await _faceClient.Face.DetectWithStreamAsync(
+                    jpg,
+                    returnFaceId: false,
+                    returnFaceLandmarks: false,
+                    returnFaceAttributes: new FaceAPI.Models.FaceAttributeType[1] { FaceAPI.Models.FaceAttributeType.Emotion })).ToArray();
+            }
+            else
+            {
+                // Local face detection found no faces; don't call Cognitive Services.
+                faces = new FaceAPI.Models.DetectedFace[0];
+            }
+
+            // Output. 
+            return new LiveCameraResult
+            {
+                Faces = faces
+            };
+        }
+
+        private async Task<LiveCameraResult> TaggingAnalysisFunction(VideoFrame frame)
+        {
+            // Encode image. 
+            var jpg = frame.Image.ToMemoryStream(".jpg", s_jpegParams);
+            // Submit image to API. 
+            VisionAPI.ApiKeyServiceClientCredentials credentials = new(cog_Key);
+            ComputerVisionClient _visionClient = new(credentials)
+            {
+                Endpoint = cog_endpoint
+            };
+            var tagResult = await _visionClient.TagImageInStreamAsync(jpg);
+            // Output. 
+            return new LiveCameraResult { Tags = tagResult.Tags.ToArray() };
+        }
+
         private void ModeList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             // Disable "most-recent" results display. 
@@ -421,22 +391,24 @@ namespace VideoAnalyzer
             switch (_mode)
             {
                 case AppMode.Faces:
-                    //_grabber.AnalysisFunction = FacesAnalysisFunction;
+                    _grabber.AnalysisFunction = FacesAnalysisFunction;
+                    _fuseClientRemoteResults = true;
                     break;
                 case AppMode.Emotions:
-                    //_grabber.AnalysisFunction = EmotionAnalysisFunction;
+                    _grabber.AnalysisFunction = EmotionAnalysisFunction;
                     break;
                 case AppMode.EmotionsWithClientFaceDetect:
                     // Same as Emotions, except we will display the most recent faces combined with
                     // the most recent API results. 
-                   // _grabber.AnalysisFunction = EmotionAnalysisFunction;
+                    _grabber.AnalysisFunction = EmotionAnalysisFunction;
                     _fuseClientRemoteResults = true;
                     break;
                 case AppMode.Tags:
-                    //_grabber.AnalysisFunction = TaggingAnalysisFunction;
+                    _grabber.AnalysisFunction = TaggingAnalysisFunction;
                     break;
                 case AppMode.Recognition:
                     _grabber.AnalysisFunction = RecognitionAnalysisFunction;
+                    _fuseClientRemoteResults = true;
                     break;
                 default:
                     _grabber.AnalysisFunction = null;
@@ -450,6 +422,7 @@ namespace VideoAnalyzer
 
             if (numCameras == 0)
             {
+                
                 MessageArea.Text = "No cameras found!";
             }
 
@@ -462,12 +435,14 @@ namespace VideoAnalyzer
 
         private void btnLoad_Click(object sender, RoutedEventArgs e)
         {
-            Files = new OpenFileDialog();
-            Files.Title = "Select a picture";
-            Files.Multiselect = true;
-            Files.Filter = "All supported graphics|*.jpg;*.jpeg;*.png|" +
+            Files = new OpenFileDialog
+            {
+                Title = "Select a picture",
+                Multiselect = true,
+                Filter = "All supported graphics|*.jpg;*.jpeg;*.png|" +
               "JPEG (*.jpg;*.jpeg)|*.jpg;*.jpeg|" +
-              "Portable Network Graphic (*.png)|*.png";
+              "Portable Network Graphic (*.png)|*.png"
+            };
             _ = Files.ShowDialog();
         }
 
@@ -546,6 +521,12 @@ namespace VideoAnalyzer
         }
 
         private bool disposedValue = false;
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
@@ -553,17 +534,16 @@ namespace VideoAnalyzer
                 if (disposing)
                 {
                     _grabber?.Dispose();
-                    //_visionClient?.Dispose();
-                    //_faceClient?.Dispose();
                     _localFaceDetector?.Dispose();
                 }
 
                 disposedValue = true;
             }
         }
-        public void Dispose()
+
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            Dispose(true);
+            await InitializeGroup(clientGroupId, clientGroupName);
         }
     }
 }

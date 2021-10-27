@@ -38,7 +38,7 @@ namespace VideoFrameAnalyzer
                 Frame = frame;
             }
             public VideoFrame Frame { get; }
-            public AnalysisResultType Analysis { get; set; } = default(AnalysisResultType);
+            public AnalysisResultType Analysis { get; set; } = default;
             public bool TimedOut { get; set; } = false;
             public Exception Exception { get; set; } = null;
         }
@@ -91,8 +91,8 @@ namespace VideoFrameAnalyzer
         protected Predicate<VideoFrame> _analysisPredicate = null;
         protected VideoCapture _reader = null;
         protected Timer _timer = null;
-        protected SemaphoreSlim _timerMutex = new SemaphoreSlim(1);
-        protected AutoResetEvent _frameGrabTimer = new AutoResetEvent(false);
+        protected SemaphoreSlim _timerMutex = new(1);
+        protected AutoResetEvent _frameGrabTimer = new(false);
         protected bool _stopping = false;
         protected Task _producerTask = null;
         protected Task _consumerTask = null;
@@ -180,7 +180,7 @@ namespace VideoFrameAnalyzer
 
                     // Grab single frame.
                     var timestamp = timestampFn();
-                    Mat image = new Mat();
+                    Mat image = new();
                     bool success = _reader.Read(image);
 
                     LogMessage("Producer: frame-grab took {0} ms", (DateTime.Now - startTime).Milliseconds);
@@ -192,7 +192,7 @@ namespace VideoFrameAnalyzer
                         {
                             LogMessage("Producer: null frame from video file, stop!");
                             // This will call StopProcessing on a new thread.
-                            var stopTask = StopProcessingAsync();
+                            _ = StopProcessingAsync();
                             // Break out of the loop to make sure we don't try grabbing more
                             // frames.
                             break;
@@ -209,7 +209,7 @@ namespace VideoFrameAnalyzer
                     VideoFrameMetadata meta = new();
                     meta.Index = frameCount;
                     meta.Timestamp = timestamp;
-                    VideoFrame vframe = new VideoFrame(image, meta);
+                    VideoFrame vframe = new(image, meta);
 
                     // Raise the new frame event
                     LogMessage("Producer: new frame provided, should analyze? Frame num: {0}", meta.Index);
@@ -274,12 +274,11 @@ namespace VideoFrameAnalyzer
                         nextTask = _analysisTaskQueue.Take();
                     }
                     catch (InvalidOperationException) { }
-
                     if (nextTask != null)
                     {
                         // Block until the result becomes available.
                         LogMessage("Consumer: waiting for next result to arrive for task {0}", nextTask.Id);
-                        var result = await nextTask;
+                        NewResultEventArgs result = await nextTask;
 
                         // Raise the new result event.
                         LogMessage("Consumer: got result for frame {0}. {1} tasks in queue", result.Frame.Metadata.Index, _analysisTaskQueue.Count);
@@ -424,25 +423,25 @@ namespace VideoFrameAnalyzer
         /// <summary> Raises the processing starting event. </summary>
         protected void OnProcessingStarting()
         {
-            ProcessingStarting?.Invoke(this, null);
+            ProcessingStarting?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary> Raises the processing started event. </summary>
         protected void OnProcessingStarted()
         {
-            ProcessingStarted?.Invoke(this, null);
+            ProcessingStarted?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary> Raises the processing stopping event. </summary>
         protected void OnProcessingStopping()
         {
-            ProcessingStopping?.Invoke(this, null);
+            ProcessingStopping?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary> Raises the processing stopped event. </summary>
         protected void OnProcessingStopped()
         {
-            ProcessingStopped?.Invoke(this, null);
+            ProcessingStopped?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary> Raises the new frame provided event. </summary>
@@ -465,14 +464,14 @@ namespace VideoFrameAnalyzer
         /// <returns> A Task&lt;NewResultEventArgs&gt; </returns>
         protected async Task<NewResultEventArgs> DoAnalyzeFrame(VideoFrame frame)
         {
-            CancellationTokenSource source = new CancellationTokenSource();
+            CancellationTokenSource source = new();
 
             // Make a local reference to the function, just in case someone sets
             // AnalysisFunction = null before we can call it.
             var fcn = AnalysisFunction;
             if (fcn != null)
             {
-                NewResultEventArgs output = new NewResultEventArgs(frame);
+                NewResultEventArgs output = new(frame);
                 var task = fcn(frame);
                 LogMessage("DoAnalysis: started task {0}", task.Id);
                 try
@@ -521,6 +520,7 @@ namespace VideoFrameAnalyzer
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         #endregion Methods

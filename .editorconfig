@@ -1,0 +1,4 @@
+﻿[*.cs]
+
+# S108: Nested blocks of code should not be left empty
+dotnet_diagnostic.S108.severity = none
