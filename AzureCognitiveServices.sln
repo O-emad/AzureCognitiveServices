@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31702.278
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoAnalyzer", "VideoAnalyzer\VideoAnalyzer.csproj", "{D68792C1-DFCB-430C-B934-32979D7B3A24}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoFrameAnalyzer", "VideoFrameAnalyzer\VideoFrameAnalyzer.csproj", "{08609BD4-7616-4622-9997-D1254385B8C3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D68792C1-DFCB-430C-B934-32979D7B3A24}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D68792C1-DFCB-430C-B934-32979D7B3A24}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D68792C1-DFCB-430C-B934-32979D7B3A24}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D68792C1-DFCB-430C-B934-32979D7B3A24}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08609BD4-7616-4622-9997-D1254385B8C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08609BD4-7616-4622-9997-D1254385B8C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08609BD4-7616-4622-9997-D1254385B8C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08609BD4-7616-4622-9997-D1254385B8C3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E0F24BDA-431A-4D03-AB67-BDB25FC377B3}
+	EndGlobalSection
+EndGlobal
