@@ -139,6 +139,7 @@ namespace VideoAnalyzer
         private BitmapSource VisualizeResult(VideoFrame frame)
         {
             // Draw any results on top of the image. 
+            
             BitmapSource visImage = frame.Image.ToBitmapSource();
 
             var result = _latestResultsToDisplay;
@@ -158,7 +159,7 @@ namespace VideoAnalyzer
                 visImage = Visualization.DrawFaces(visImage, result.Faces, result.CelebrityNames);
                 visImage = Visualization.DrawTags(visImage, result.Tags);
             }
-
+            
             return visImage;
         }
 

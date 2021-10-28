@@ -59,7 +59,7 @@
                 </StackPanel>
 
             </Grid>
-            <TextBlock Name="MessageArea" Margin="5" Grid.Row="2" VerticalAlignment="Center" Background="White" />
+            <TextBlock Name="MessageArea" Margin="5" Grid.Row="2" VerticalAlignment="Center" Foreground="Aqua" />
         </Grid>
     </Viewbox>
 </Window>

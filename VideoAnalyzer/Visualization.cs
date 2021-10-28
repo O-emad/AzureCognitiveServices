@@ -62,7 +62,7 @@ namespace VideoAnalyzer
                     var geom = ft.BuildGeometry(new System.Windows.Point(10 * annotationScale, y));
                     drawingContext.DrawGeometry(s_lineBrush, new Pen(Brushes.Black, 2 * annotationScale), geom);
                     // Move line down
-                    y += 42 * annotationScale;
+                    y += 32 * annotationScale;
                 }
             };
 
@@ -106,7 +106,9 @@ namespace VideoAnalyzer
 
                     faceRect.Inflate(6 * annotationScale, 6 * annotationScale);
 
-                    double lineThickness = 4 * annotationScale;
+
+                    //rectangle outline
+                    double lineThickness = 1 * annotationScale;
 
                     drawingContext.DrawRectangle(
                         Brushes.Transparent,
@@ -117,12 +119,12 @@ namespace VideoAnalyzer
                     {
                         FormattedText ft = new(summary.ToString(),
                             CultureInfo.CurrentCulture, FlowDirection.LeftToRight, s_typeface,
-                            16 * annotationScale, Brushes.Black,3);
+                            8 * annotationScale, Brushes.Black,1);
 
-                        var pad = 3 * annotationScale;
+                        var pad = 1 * annotationScale;
 
                         var ypad = pad;
-                        var xpad = pad + 4 * annotationScale;
+                        var xpad = pad + 1 * annotationScale;
                         var origin = new System.Windows.Point(
                             faceRect.Left + xpad - lineThickness / 2,
                             faceRect.Top - ft.Height - ypad + lineThickness / 2);
