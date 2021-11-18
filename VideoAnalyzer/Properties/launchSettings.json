@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "VideoAnalyzer": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "TRACE_GRABBER": "1"
+      }
+    }
+  }
+}

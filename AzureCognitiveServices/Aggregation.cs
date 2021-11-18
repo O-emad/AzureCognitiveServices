@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace VideoAnalyzer
+namespace AzureCognitiveServices
 {
     static internal class Aggregation
     {

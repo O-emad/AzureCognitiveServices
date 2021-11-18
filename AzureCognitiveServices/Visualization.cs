@@ -9,7 +9,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using FaceAPI = Microsoft.Azure.CognitiveServices.Vision.Face;
 using VisionAPI = Microsoft.Azure.CognitiveServices.Vision.ComputerVision;
-namespace VideoAnalyzer
+namespace AzureCognitiveServices
 {
     public static class Visualization
     {

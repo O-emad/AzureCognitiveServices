@@ -19,8 +19,22 @@
                 <ComboBox x:Name="CameraList" Width="100" Margin="5,5,0,5" Loaded="CameraList_Loaded" />
                 <Button x:Name="startButton" Content="Start Camera" Padding="5,0" Margin="5,5,0,5" Click="startButton_Click" />
                 <Button x:Name="stopButton" Content="Stop Camera" Padding="5,0" Margin="5,5,0,5" Click="stopButton_Click" />
-                <TextBlock VerticalAlignment="Center" Margin="15,5,0,5" Text="Mode:" />
+                <TextBlock VerticalAlignment="Center" Margin="15,5,0,5" Text="TriggerAnalysis" Foreground="White"></TextBlock>
+                <TextBlock VerticalAlignment="Center" Margin="3,5,0,5"
+                           Text="{Binding ElementName=slider_AnalysisInterval, Mode=TwoWay, Path=Value, StringFormat={}{0:# (ms)}}"
+                            Foreground="White" ></TextBlock>
+                <Slider x:Name="slider_AnalysisInterval" Minimum="500" Maximum="5000" Value="1000" IsSnapToTickEnabled="True" 
+                        TickFrequency="100" Opacity="1" Background="Transparent" ValueChanged="slider_AnalysisInterval_ValueChanged"
+                        HorizontalAlignment="Center" Width="300" SmallChange="100" VerticalAlignment="Center" Margin="5,5,0,5">
+
+                </Slider>
+                <TextBlock VerticalAlignment="Center" Margin="15,5,0,5" Text="Mode:" Foreground="White"/>
                 <ComboBox x:Name="ModeList" Width="100" Margin="5,5,0,5" Loaded="ModeList_Loaded" SelectionChanged="ModeList_SelectionChanged" />
+                <CheckBox x:Name="checkBox" Margin="10,10,0,5" Checked="checkBox_SelectionChange" Unchecked="checkBox_SelectionChange">
+                    <TextBlock x:Name="checkBoxLabel" FlowDirection="LeftToRight" Text="FuseRemoteResults" Foreground="White" />
+                </CheckBox>
+                
+                
             </StackPanel>
             <Button x:Name="personButton" Content="Show/Hide Person Panel" Padding="5,0" Margin="5,5,300,5" Click="personButton_Click" HorizontalAlignment="Right" />
             <Grid x:Name="cameraGrid" Grid.Row="1">

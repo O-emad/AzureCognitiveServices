@@ -1,9 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
     <TargetFramework>net5.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon />
+    <StartupObject />
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE;TRACE_GRABBER</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,15 +17,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.CognitiveServices.Vision.ComputerVision" Version="7.0.0" />
-    <PackageReference Include="Microsoft.Azure.CognitiveServices.Vision.Face" Version="2.8.0-preview.1" />
     <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.5.3.20210817" />
-    <PackageReference Include="OpenCvSharp4.Windows" Version="4.5.3.20210817" />
-    <PackageReference Include="OpenCvSharp4.WpfExtensions" Version="4.5.3.20210817" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\VideoFrameAnalyzer\VideoFrameAnalyzer.csproj" />
+    <ProjectReference Include="..\AzureCognitiveServices\AzureCognitiveServices.csproj" />
   </ItemGroup>
 
   <ItemGroup>

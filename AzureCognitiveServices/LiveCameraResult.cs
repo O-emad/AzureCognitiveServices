@@ -2,9 +2,9 @@
 using FaceAPI = Microsoft.Azure.CognitiveServices.Vision.Face.Models;
 using VisionAPI = Microsoft.Azure.CognitiveServices.Vision.ComputerVision.Models;
 
-namespace VideoAnalyzer
+namespace AzureCognitiveServices
 {
-    internal class LiveCameraResult
+    public class LiveCameraResult
     {
         public FaceAPI.DetectedFace[] Faces { get; set; } = null;
         public string[] CelebrityNames { get; set; } = null;
