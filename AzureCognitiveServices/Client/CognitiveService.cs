@@ -18,34 +18,67 @@ using VisionAPI = Microsoft.Azure.CognitiveServices.Vision.ComputerVision;
 
 namespace AzureCognitiveServices.Client
 {
-    public class CognitiveService :IDisposable
+    public class CognitiveService : IDisposable
     {
-        public string ClientGroupId { get; set; } = "5f432198";
-        public string ClientGroupName { get; set; } = "Clients";
+        /// <summary>
+        /// face recognition group id
+        /// </summary>
+        public string ClientGroupId { get; set; }
+        /// <summary>
+        /// face recognition group name
+        /// </summary>
+        public string ClientGroupName { get; set; }
+        /// <summary>
+        /// fuse the remote results with the live stream option
+        /// </summary>
+        public bool FuseClientRemoteResults { get; set; }
 
-        public bool FuseClientRemoteResults;
-
+        
         internal LiveCameraResult LatestResultsToDisplay { get; set; } = null;
-
+        /// <summary>
+        /// api connection configuration
+        /// </summary>
         public ServiceHttpConnection HttpConnectionConfiguration { get; set; }
 
-        public FrameGrabber<LiveCameraResult> Grabber { get; set; }
-
-        public CascadeClassifier LocalFaceDetector { get; set; } = new CascadeClassifier();
+        internal FrameGrabber<LiveCameraResult> Grabber { get; set; }
+        /// <summary>
+        /// classifier for face detection
+        /// </summary>
+        internal CascadeClassifier LocalFaceDetector { get; set; } = new CascadeClassifier();
+        /// <summary>
+        /// how often to trigger analysis
+        /// </summary>
         public TimeSpan AnalyzeInterval { get; set; } = TimeSpan.FromSeconds(1);
-
+        /// <summary>
+        /// the unprocessed image to view, in case of not using it, register in to a hidden view
+        /// </summary>
         public Image LeftImage { get; set; }
+        /// <summary>
+        /// the processed image
+        /// </summary>
         public Image RightImage { get; set; }
+        /// <summary>
+        /// a message area to view the response messages
+        /// </summary>
         public TextBlock MessageArea { get; set; }
         public MessageBox MessageBox { get; set; }
+        /// <summary>
+        /// the operating app mode
+        /// </summary>
         public AppMode Mode { get; set; }
 
+        /// <summary>
+        /// the mainwindow dispatcher
+        /// </summary>
         public Dispatcher Dispatcher { get; set; }
 
         private static readonly ImageEncodingParam[] s_jpegParams = {
             new ImageEncodingParam(ImwriteFlags.JpegQuality, 60)
         };
 
+        /// <summary>
+        /// the supported app modes
+        /// </summary>
         public enum AppMode
         {
             Faces,
@@ -53,6 +86,12 @@ namespace AzureCognitiveServices.Client
             Tags,
             Recognition
         }
+
+        /// <summary>
+        /// draws the result on top of the image
+        /// </summary>
+        /// <param name="frame">the analyzed frame</param>
+        /// <returns></returns>
         public BitmapSource VisualizeResult(VideoFrame frame)
         {
             // Draw any results on top of the image. 
@@ -79,10 +118,16 @@ namespace AzureCognitiveServices.Client
 
             return visImage;
         }
+
+        /// <summary>
+        ///Use a simple heuristic for matching the client-side faces to the faces in the
+        /// results. Just sort both lists left-to-right, and assume a 1:1 correspondence.
+        /// </summary>
+        /// <param name="faces">list of api detected faces</param>
+        /// <param name="clientRects">list of opencv rectangles representing the detected faces</param>
         private static void MatchAndReplaceFaceRectangles(DetectedFace[] faces, OpenCvSharp.Rect[] clientRects)
         {
-            // Use a simple heuristic for matching the client-side faces to the faces in the
-            // results. Just sort both lists left-to-right, and assume a 1:1 correspondence. 
+ 
 
             // Sort the faces left-to-right. 
             var sortedResultFaces = faces
@@ -104,7 +149,12 @@ namespace AzureCognitiveServices.Client
                 sortedResultFaces[i].FaceRectangle = new FaceAPI.Models.FaceRectangle { Left = r.Left, Top = r.Top, Width = r.Width, Height = r.Height };
             }
         }
-
+        /// <summary>
+        /// recognition function recognizes the faces from the given group id
+        /// </summary>
+        /// <param name="frame">the video frame to be analyzed</param>
+        /// <returns> A <see cref="Task{LiveCameraResult}"/> representing the asynchronous API call,
+        ///     and containing the faces returned by the API. </returns>
         public async Task<LiveCameraResult> RecognitionAnalysisFunction(VideoFrame frame)
         {
             // Encode image. 
@@ -155,6 +205,11 @@ namespace AzureCognitiveServices.Client
             }
         }
 
+        /// <summary>
+        /// creates a DetectedFace object from the given facerectangle
+        /// </summary>
+        /// <param name="rect">face rectangle representing the detected face</param>
+        /// <returns>a <see cref="DetectedFace"/> object with only the face rectangle</returns>
         private static DetectedFace CreateFace(FaceRectangle rect)
         {
             return new FaceAPI.Models.DetectedFace
@@ -169,8 +224,9 @@ namespace AzureCognitiveServices.Client
             };
         }
 
-        /// <summary> Function which submits a frame to the Face API. </summary>
-        /// <param name="frame"> The video frame to submit. </param>
+        /// <summary> face function detects the face of a given person and generate the required attributes
+        /// </summary>
+        /// <param name="frame">the video frame to be analyzed </param>
         /// <returns> A <see cref="Task{LiveCameraResult}"/> representing the asynchronous API call,
         ///     and containing the faces returned by the API. </returns>
         public async Task<LiveCameraResult> FacesAnalysisFunction(VideoFrame frame)
@@ -191,6 +247,12 @@ namespace AzureCognitiveServices.Client
             return new LiveCameraResult { Faces = faces.ToArray() };
         }
 
+        /// <summary>
+        /// emotion function recognizes the emotions of the given face
+        /// </summary>
+        /// <param name="frame">the video frame to be analyzed</param>
+        /// <returns> A <see cref="Task{LiveCameraResult}"/> representing the asynchronous API call,
+        ///     and containing the faces returned by the API. </returns>
         public async Task<LiveCameraResult> EmotionAnalysisFunction(VideoFrame frame)
         {
             // Encode image. 
@@ -223,7 +285,12 @@ namespace AzureCognitiveServices.Client
                 Faces = faces
             };
         }
-
+        /// <summary>
+        /// tagging function generates tags for the recognized objects in an image
+        /// </summary>
+        /// <param name="frame">the video frame to be analyzed</param>
+        /// <returns> A <see cref="Task{LiveCameraResult}"/> representing the asynchronous API call,
+        ///     and containing the faces returned by the API. </returns>
         public async Task<LiveCameraResult> TaggingAnalysisFunction(VideoFrame frame)
         {
             // Encode image. 
@@ -234,9 +301,18 @@ namespace AzureCognitiveServices.Client
             // Output. 
             return new LiveCameraResult { Tags = tagResult.Tags.ToArray() };
         }
+
+        /// <summary>
+        ///intializes a group with the given id and name, this group contains the model to be trained to recognize faces from given training samples
+        ///*IMPORTANT* don't intialize in the MainWindow constructor
+        /// </summary>
+        /// <param name="groupId"> group id</param>
+        /// <param name="groupName"> group name</param>
+        /// <returns></returns>
         public async Task InitializeGroup(string groupId, string groupName)
         {
-
+            ClientGroupId = groupId;
+            ClientGroupName = groupName;
             var client = HttpConnectionConfiguration.AsFaceApiService().Client;
             PersonGroup group = new();
             try
@@ -255,7 +331,7 @@ namespace AzureCognitiveServices.Client
                     try
                     {
                         await client.PersonGroup.CreateAsync(groupId, groupName);
-
+                        
                     }
                     catch (Exception ex)
                     {
@@ -265,6 +341,14 @@ namespace AzureCognitiveServices.Client
 
             }
         }
+
+        /// <summary>
+        /// adds a person to the given group, can also be used to add more images to the same person to increase the confidence of recognition
+        /// </summary>
+        /// <param name="groupId">group id</param>
+        /// <param name="personName">person name</param>
+        /// <param name="images">collection of images</param>
+        /// <returns></returns>
         public async Task AddPersonToGroup(string groupId, string personName, IEnumerable<string> images)
         {
             var client = HttpConnectionConfiguration.AsFaceApiService().Client;
@@ -288,6 +372,12 @@ namespace AzureCognitiveServices.Client
             }
             await client.PersonGroup.TrainAsync(groupId);
         }
+
+        /// <summary>
+        /// selects the desired app mode to be used 
+        /// </summary>
+        /// <param name="mode">the app mode desired </param>
+        /// <param name="fuseRemoteClientResults">fuse the results from the service with the live stream</param>
         public void SetAppMode(AppMode mode, bool fuseRemoteClientResults = true)
         {
             Mode = mode;
@@ -314,26 +404,52 @@ namespace AzureCognitiveServices.Client
                     break;
             }
         }
+        /// <summary>
+        /// forces the application to fuse the results from the service with the live stream with any app mode
+        /// </summary>
+        /// <param name="fuseRemoteClientResults"></param>
         public void FuseRemoteResultsSetting(bool fuseRemoteClientResults)
         {
             FuseClientRemoteResults = fuseRemoteClientResults;
         }
+
+        /// <summary>
+        /// sets the frequency of the analysis, the analysis also calls the azure service, so keep this within a reasonable
+        /// value to make sure the service has enough time to respond *above 500ms is prefered*
+        /// </summary>
+        /// <param name="seconds"></param>
         public void TriggerAnalysisOnInterval(TimeSpan seconds)
         {
             
             AnalyzeInterval = seconds;
             Grabber.TriggerAnalysisOnInterval(AnalyzeInterval);
         }
+        /// <summary>
+        /// get the number of the available cameras on the device
+        /// </summary>
+        /// <returns>count of available cameras</returns>
         public int GetNumberOfAvailableCameras()
         {
            return Grabber.GetNumCameras();
         }
+
+        /// <summary>
+        /// starts the image processing on the given camera number, with the provided analysis interval, it has a default value of 1 second
+        /// and can be overriden using the analysisInterval parameter or with TriggerAnalysisOnInterval
+        /// </summary>
+        /// <param name="analysisInterval">the frequency of analysis</param>
+        /// <param name="cameraNum">the selected camera number</param>
+        /// <returns></returns>
         public async Task StartProcessing(TimeSpan analysisInterval ,int cameraNum = 0)
         {
             TriggerAnalysisOnInterval(analysisInterval);
 
             await Grabber.StartProcessingCameraAsync(cameraNum);
         }
+        /// <summary>
+        /// stops the image processing and turns of the camera connection
+        /// </summary>
+        /// <returns></returns>
         public async Task StopProcessing()
         {
             await Grabber.StopProcessingAsync();

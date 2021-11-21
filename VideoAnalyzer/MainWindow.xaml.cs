@@ -37,6 +37,12 @@ namespace VideoAnalyzer
     /// </summary>
     public partial class MainWindow : System.Windows.Window, IDisposable
     {
+        //values from Azure Service
+        private const string groupId = "5f432198";
+        private const string groupName = "Clients";
+        private const string serviceKey = "5909943744314ecebf9170367f5b1a2a";
+        private const string serviceEndpoint = @"https://offbeatface.cognitiveservices.azure.com/";
+
         private OpenFileDialog Files { get; set; }
 
         public CognitiveService Service { get; set; }
@@ -46,10 +52,12 @@ namespace VideoAnalyzer
             Service = CognitiveServiceBuilder.Create()
                             .HavingHttpConnection(config =>
                             {
-                                config.WithServiceKey("5909943744314ecebf9170367f5b1a2a")
+                                config.WithServiceKey(serviceKey)
                                 .EnsureSecureConnection()
-                                .WithServiceEndpointUrl(@"https://offbeatface.cognitiveservices.azure.com/");
+                                .WithServiceEndpointUrl(serviceEndpoint);
                             }).Build(Dispatcher);
+            //create containers in wpf for the left image "unprocessed images", right image "processed images", and a message area to view response messages
+            //register them to the services following properties. 
             Service.MessageArea = MessageArea;
             Service.LeftImage = LeftImage;
             Service.RightImage = RightImage;
@@ -58,7 +66,8 @@ namespace VideoAnalyzer
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            await Service.InitializeGroup(Service.ClientGroupId, Service.ClientGroupName);
+            
+            await Service.InitializeGroup(groupId,groupName);
         }
 
 
@@ -149,7 +158,7 @@ namespace VideoAnalyzer
                 Name = personName.Text,
                 Images = Files.FileNames.ToList()
             };
-            await Service?.AddPersonToGroup(Service?.ClientGroupId, person.Name, person.Images);
+            await Service?.AddPersonToGroup(groupId, person.Name, person.Images);
             AddPersonPanel.Visibility = Visibility.Collapsed;
         }
 
