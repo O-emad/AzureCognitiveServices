@@ -31,14 +31,14 @@ namespace AzureCognitiveServices.Client
         /// <summary>
         /// fuse the remote results with the live stream option
         /// </summary>
-        public bool FuseClientRemoteResults { get; set; }
+        public bool FuseClientRemoteResults { get; private set; }
 
         
         internal LiveCameraResult LatestResultsToDisplay { get; set; } = null;
         /// <summary>
         /// api connection configuration
         /// </summary>
-        public ServiceHttpConnection HttpConnectionConfiguration { get; set; }
+        public ServiceHttpConnection HttpConnectionConfiguration { get; internal set; }
 
         internal FrameGrabber<LiveCameraResult> Grabber { get; set; }
         /// <summary>
@@ -48,7 +48,7 @@ namespace AzureCognitiveServices.Client
         /// <summary>
         /// how often to trigger analysis
         /// </summary>
-        public TimeSpan AnalyzeInterval { get; set; } = TimeSpan.FromSeconds(1);
+        public TimeSpan AnalyzeInterval { get; private set; } = TimeSpan.FromSeconds(1);
         /// <summary>
         /// the unprocessed image to view, in case of not using it, register in to a hidden view
         /// </summary>
@@ -65,16 +65,18 @@ namespace AzureCognitiveServices.Client
         /// <summary>
         /// the operating app mode
         /// </summary>
-        public AppMode Mode { get; set; }
+        public AppMode Mode { get; private set; }
 
         /// <summary>
         /// the mainwindow dispatcher
         /// </summary>
-        public Dispatcher Dispatcher { get; set; }
+        internal Dispatcher Dispatcher { get; set; }
 
         private static readonly ImageEncodingParam[] s_jpegParams = {
             new ImageEncodingParam(ImwriteFlags.JpegQuality, 60)
         };
+
+        private bool disposedValue;
 
         /// <summary>
         /// the supported app modes
@@ -92,7 +94,7 @@ namespace AzureCognitiveServices.Client
         /// </summary>
         /// <param name="frame">the analyzed frame</param>
         /// <returns></returns>
-        public BitmapSource VisualizeResult(VideoFrame frame)
+       internal BitmapSource VisualizeResult(VideoFrame frame)
         {
             // Draw any results on top of the image. 
 
@@ -155,7 +157,7 @@ namespace AzureCognitiveServices.Client
         /// <param name="frame">the video frame to be analyzed</param>
         /// <returns> A <see cref="Task{LiveCameraResult}"/> representing the asynchronous API call,
         ///     and containing the faces returned by the API. </returns>
-        public async Task<LiveCameraResult> RecognitionAnalysisFunction(VideoFrame frame)
+        private async Task<LiveCameraResult> RecognitionAnalysisFunction(VideoFrame frame)
         {
             // Encode image. 
             MemoryStream jpg = frame.Image.ToMemoryStream(".jpg", s_jpegParams);
@@ -229,7 +231,7 @@ namespace AzureCognitiveServices.Client
         /// <param name="frame">the video frame to be analyzed </param>
         /// <returns> A <see cref="Task{LiveCameraResult}"/> representing the asynchronous API call,
         ///     and containing the faces returned by the API. </returns>
-        public async Task<LiveCameraResult> FacesAnalysisFunction(VideoFrame frame)
+        private async Task<LiveCameraResult> FacesAnalysisFunction(VideoFrame frame)
         {
             // Encode image. 
             var jpg = frame.Image.ToMemoryStream(".jpg", s_jpegParams);
@@ -253,7 +255,7 @@ namespace AzureCognitiveServices.Client
         /// <param name="frame">the video frame to be analyzed</param>
         /// <returns> A <see cref="Task{LiveCameraResult}"/> representing the asynchronous API call,
         ///     and containing the faces returned by the API. </returns>
-        public async Task<LiveCameraResult> EmotionAnalysisFunction(VideoFrame frame)
+        private async Task<LiveCameraResult> EmotionAnalysisFunction(VideoFrame frame)
         {
             // Encode image. 
             var jpg = frame.Image.ToMemoryStream(".jpg", s_jpegParams);
@@ -291,7 +293,7 @@ namespace AzureCognitiveServices.Client
         /// <param name="frame">the video frame to be analyzed</param>
         /// <returns> A <see cref="Task{LiveCameraResult}"/> representing the asynchronous API call,
         ///     and containing the faces returned by the API. </returns>
-        public async Task<LiveCameraResult> TaggingAnalysisFunction(VideoFrame frame)
+        private async Task<LiveCameraResult> TaggingAnalysisFunction(VideoFrame frame)
         {
             // Encode image. 
             var jpg = frame.Image.ToMemoryStream(".jpg", s_jpegParams);
@@ -454,9 +456,6 @@ namespace AzureCognitiveServices.Client
         {
             await Grabber.StopProcessingAsync();
         }
-
-        private bool disposedValue;
-
         public void Dispose()
         {
             Dispose(true);
